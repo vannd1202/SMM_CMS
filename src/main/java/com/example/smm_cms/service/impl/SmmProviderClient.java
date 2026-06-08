@@ -1,5 +1,6 @@
 package com.example.smm_cms.service.impl;
 
+import com.example.smm_cms.dto.response.provider.ProviderServiceResponse;
 import com.example.smm_cms.service.ProviderClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -7,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.List;
 
 
 @Service
@@ -31,7 +34,7 @@ public class SmmProviderClient implements ProviderClient {
     }
 
     @Override
-    public String getServices(String apiUrl, String apiKey) {
+    public List<ProviderServiceResponse> getServices(String apiUrl, String apiKey) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("key", apiKey);
         body.add("action", "services");
@@ -41,7 +44,8 @@ public class SmmProviderClient implements ProviderClient {
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue(body)
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToFlux(ProviderServiceResponse.class)
+                .collectList()
                 .block();
     }
 

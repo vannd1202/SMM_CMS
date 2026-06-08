@@ -1,5 +1,6 @@
 package com.example.smm_cms.service.impl;
 
+import com.example.smm_cms.base.BaseException;
 import com.example.smm_cms.base.BaseService;
 import com.example.smm_cms.base.ResponseData;
 import com.example.smm_cms.base.ResponsePage;
@@ -7,6 +8,7 @@ import com.example.smm_cms.common.ProviderStatus;
 import com.example.smm_cms.dto.request.provider.ProviderResponse;
 import com.example.smm_cms.dto.request.provider.SearchProviderRequest;
 import com.example.smm_cms.dto.response.provider.CreateProviderRequest;
+import com.example.smm_cms.dto.response.provider.ProviderServiceResponse;
 import com.example.smm_cms.dto.response.provider.UpdateProviderRequest;
 import com.example.smm_cms.entity.ProviderEntity;
 import com.example.smm_cms.repository.ProviderRepository;
@@ -123,6 +125,35 @@ public class ProviderServiceImpl extends BaseService implements IProviderService
                 provider.getApiKey()
         );
         responseData.setMessage(result);
+        return responseData;
+    }
+
+    @Override
+    public ResponseData<List<ProviderServiceResponse>> getServices(Long id) {
+        ResponseData<List<ProviderServiceResponse>> responseData = new ResponseData<>();
+        ProviderEntity provider = providerRepository.findById(id)
+                .orElseThrow(() ->
+                        new BaseException(1001, "Provider không tồn tại"));
+        List<ProviderServiceResponse> data = providerClient.getServices(
+                provider.getApiUrl(),
+                provider.getApiKey()
+        );
+       responseData.setData(data);
+        return responseData;
+    }
+
+    @Override
+    public ResponseData<?> getBalance(Long id) {
+        ResponseData<?> responseData = new ResponseData<>();
+        ProviderEntity provider = providerRepository.findById(id)
+                .orElseThrow(() ->
+                        new BaseException(1001, "Provider không tồn tại"));
+
+        String response = providerClient.getBalance(
+                provider.getApiUrl(),
+                provider.getApiKey()
+        );
+        responseData.setMessage(response);
         return responseData;
     }
 

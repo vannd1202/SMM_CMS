@@ -42,7 +42,6 @@ public class ProviderController {
 
     @GetMapping("/search")
     public ResponseData<?> getAll(@Valid @ParameterObject SearchProviderRequest request) {
-
         return providerService.getAll(request);
     }
 

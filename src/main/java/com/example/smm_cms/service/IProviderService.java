@@ -14,7 +14,12 @@ public interface IProviderService {
 
     ResponseData<?> getById(Long id);
 
-    // các hàm test
+    // start các hàm test
      ResponseData<?> testConnection(Long id);
 
+     ResponseData<?> getServices(Long id);
+
+    ResponseData<?> getBalance(Long id);
+
+    //end các hàm test
 }

@@ -4,10 +4,7 @@ import com.example.smm_cms.base.ResponseData;
 import com.example.smm_cms.common.ApiPath;
 import com.example.smm_cms.service.IProviderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(ApiPath.PUBLIC)
@@ -20,4 +17,14 @@ public class TestController {
         return providerService.testConnection(id);
     }
 
+
+    @GetMapping("/services/{id}")
+    public ResponseData<?> getServices(@PathVariable Long id) {
+        return providerService.getServices(id);
+    }
+
+    @GetMapping("/balance/{id}")
+    public ResponseData<?> getBalance(@PathVariable Long id) {
+        return providerService.getBalance(id);
+    }
 }
