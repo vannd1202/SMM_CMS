@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @Builder
 public class ErrorResponse {
-    private int status;
+    private int code;
     private String message;
     private List<FieldErrorDetail> errors;
     private LocalDateTime timestamp;
