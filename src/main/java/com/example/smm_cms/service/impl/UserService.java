@@ -1,6 +1,6 @@
 package com.example.smm_cms.service.impl;
 
-import com.example.smm_cms.Role;
+import com.example.smm_cms.common.Role;
 import com.example.smm_cms.base.BaseService;
 import com.example.smm_cms.base.ResponseData;
 import com.example.smm_cms.base.ResponsePage;

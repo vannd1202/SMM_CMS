@@ -1,4 +1,4 @@
-package com.example.smm_cms;
+package com.example.smm_cms.common;
 
 public enum Role {
     ROLE_ADMIN,

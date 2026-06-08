@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 public class CustomerController {
     private final IUserService userService;
-    @RequestMapping("/customer/list")
-    public ResponseData<?> list(@Valid @ParameterObject CustomerRequest request) {
+    @RequestMapping("/customer/search")
+    public ResponseData<?> search(@Valid @ParameterObject CustomerRequest request) {
         return userService.list(request);
     }
 

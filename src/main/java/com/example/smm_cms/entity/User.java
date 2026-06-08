@@ -1,6 +1,6 @@
 package com.example.smm_cms.entity;
 
-import com.example.smm_cms.Role;
+import com.example.smm_cms.common.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
