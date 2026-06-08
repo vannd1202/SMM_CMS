@@ -11,6 +11,7 @@ import com.example.smm_cms.dto.response.provider.UpdateProviderRequest;
 import com.example.smm_cms.entity.ProviderEntity;
 import com.example.smm_cms.repository.ProviderRepository;
 import com.example.smm_cms.service.IProviderService;
+import com.example.smm_cms.service.ProviderClient;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ import java.util.List;
 @Transactional
 public class ProviderServiceImpl extends BaseService implements IProviderService {
     private final ProviderRepository providerRepository;
+    private final ProviderClient providerClient;
 
     @Override
     public ResponseData<?> create(
@@ -108,6 +110,20 @@ public class ProviderServiceImpl extends BaseService implements IProviderService
                 responseData.setMessage("Lấy thông tin thất bai");
             }
             return responseData;
+    }
+
+    @Override
+    public ResponseData<?> testConnection(Long id) {
+        ResponseData<?> responseData = new ResponseData<>();
+        ProviderEntity provider = providerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Provider not found"));
+
+        String result = providerClient.testConnection(
+                provider.getApiUrl(),
+                provider.getApiKey()
+        );
+        responseData.setMessage(result);
+        return responseData;
     }
 
     private ProviderResponse toResponse(

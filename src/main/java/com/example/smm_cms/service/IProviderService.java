@@ -13,4 +13,8 @@ public interface IProviderService {
     ResponseData<?> getAll(SearchProviderRequest request);
 
     ResponseData<?> getById(Long id);
+
+    // các hàm test
+     ResponseData<?> testConnection(Long id);
+
 }
