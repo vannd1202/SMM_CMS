@@ -1,13 +1,16 @@
 package com.example.smm_cms.entity;
 
+import com.example.smm_cms.Role;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "users")
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class User extends BaseEntity {
 
     @Id
@@ -18,5 +21,7 @@ public class User extends BaseEntity {
 
     private String password;
 
-    private String role; // ADMIN / USER
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 }

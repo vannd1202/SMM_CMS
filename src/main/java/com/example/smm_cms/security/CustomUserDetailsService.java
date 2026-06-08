@@ -34,10 +34,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     private List<SimpleGrantedAuthority> mapRoles(User user) {
-
-        // role ví dụ: "ADMIN" hoặc "USER"
         return List.of(
-                new SimpleGrantedAuthority("ROLE_" + user.getRole())
+                new SimpleGrantedAuthority(user.getRole().name())
         );
     }
 }

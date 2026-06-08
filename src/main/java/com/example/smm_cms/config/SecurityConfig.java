@@ -25,7 +25,6 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http)
             throws Exception {
-
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(
@@ -36,7 +35,8 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/auth/**",
                                         "/swagger-ui/**",
-                                        "/v3/api-docs/**")
+                                        "/v3/api-docs/**",
+                                        "/public/**")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated())
