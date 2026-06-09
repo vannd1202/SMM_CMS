@@ -1,5 +1,6 @@
 package com.example.smm_cms.service.impl;
 
+import com.example.smm_cms.base.BaseException;
 import com.example.smm_cms.common.Role;
 import com.example.smm_cms.base.BaseService;
 import com.example.smm_cms.base.ResponseData;
@@ -31,42 +32,59 @@ public class UserService extends BaseService implements IUserService {
     @Transactional
     public ResponseData<String> register(RegisterRequest request) {
         ResponseData<String> responseData = new ResponseData<>();
+        try {
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new BaseException(300,"Username already exists");
+            }
 
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already exists");
+            User user = User.builder()
+                    .username(request.getUsername())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .role(Role.ROLE_USER)
+                    .build();
+
+            userRepository.save(user);
+            responseData.success(user.getUsername());
+
+        }catch (BaseException e) {
+            LOGGER.error("Lỗi đăng ký: {}", e.getMessage());
+            responseData.setCode(e.getCode());
+            responseData.setMessage(e.getMessage());
+            return responseData;
         }
 
-        User user = User.builder()
-                .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.ROLE_USER)
-                .build();
-
-        userRepository.save(user);
-        responseData.success(user.getUsername());
         return responseData;
     }
 
     public ResponseData<?> login(LoginRequest request) {
+        LoginResponse response;
+        try {
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new BaseException(10001,"Invalid username or password"));
 
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+            if (!passwordEncoder.matches(
+                    request.getPassword(),
+                    user.getPassword())) {
 
-        if (!passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword())) {
+                throw new RuntimeException("Invalid username or password");
+            }
 
-            throw new RuntimeException("Invalid username or password");
+            String token = jwtService.generateToken(user.getUsername());
+
+             response= LoginResponse.builder()
+                    .accessToken(token)
+                    .tokenType("Bearer")
+                    .username(user.getUsername())
+                    .role(user.getRole().name())
+                    .build();
+        }catch (BaseException e) {
+            LOGGER.error("Lỗi đăng nhập: {}", e.getMessage());
+            ResponseData<String> responseData = new ResponseData<>();
+            responseData.setCode(e.getCode());
+            responseData.setMessage(e.getMessage());
+            return responseData;
         }
 
-        String token = jwtService.generateToken(user.getUsername());
-
-        LoginResponse response = LoginResponse.builder()
-                .accessToken(token)
-                .tokenType("Bearer")
-                .username(user.getUsername())
-                .role(user.getRole().name())
-                .build();
 
         return new ResponseData<LoginResponse>()
                 .success(response);

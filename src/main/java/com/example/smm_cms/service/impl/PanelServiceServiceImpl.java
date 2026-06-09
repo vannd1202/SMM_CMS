@@ -87,7 +87,11 @@ public class PanelServiceServiceImpl extends BaseService implements IPanelServic
                                                 400,
                                                 "Panel service không tồn tại"));
                 responseData.setData(toResponse(entity));
-            } catch (Exception e) {
+            }catch (BaseException e) {
+                LOGGER.error(logPrefix + e.getMessage());
+                responseData.setMessage(e.getMessage());
+            }
+            catch (Exception e) {
                 LOGGER.error(logPrefix + e.getMessage());
                 responseData.setMessage("Lấy thông tin thất bại");
             }
@@ -132,12 +136,16 @@ public class PanelServiceServiceImpl extends BaseService implements IPanelServic
                     panelServiceRepository.findById(id)
                             .orElseThrow(() ->
                                     new BaseException(
-                                            404,
+                                            400,
                                             "Panel service không tồn tại"));
             entity.setActive(false);
             panelServiceRepository.save(entity);
             responseData.setMessage("Xóa thành công");
-        }catch (Exception e) {
+        }catch (BaseException e) {
+            LOGGER.error(logPrefix + e.getMessage());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
             LOGGER.error(logPrefix + e.getMessage());
             responseData.setMessage("Xóa thất bại");
         }
@@ -153,12 +161,16 @@ public class PanelServiceServiceImpl extends BaseService implements IPanelServic
                     panelServiceRepository.findById(id)
                             .orElseThrow(() ->
                                     new BaseException(
-                                            404,
+                                            400,
                                             "Panel service không tồn tại"));
             entity.setActive(true);
             panelServiceRepository.save(entity);
             responseData.setMessage("Kích hoạt thành công");
-        } catch (Exception e) {
+        }catch (BaseException e) {
+            LOGGER.error(logPrefix + e.getMessage());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
             LOGGER.error(logPrefix + e.getMessage());
             responseData.setMessage("Kích hoạt thất bại");
         }
@@ -174,12 +186,16 @@ public class PanelServiceServiceImpl extends BaseService implements IPanelServic
                     panelServiceRepository.findById(id)
                             .orElseThrow(() ->
                                     new BaseException(
-                                            404,
+                                            400,
                                             "Panel service không tồn tại"));
             entity.setActive(false);
             panelServiceRepository.save(entity);
             responseData.setMessage("Vô hiệu hóa thành công");
-        } catch (Exception e) {
+        }catch (BaseException e) {
+            LOGGER.error(logPrefix + e.getMessage());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
             LOGGER.error(logPrefix + e.getMessage());
             responseData.setMessage("Vô hiệu hóa thất bại");
         }

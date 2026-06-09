@@ -57,7 +57,11 @@ public class ServiceMappingServiceImpl extends BaseService implements IServiceMa
             entity.setPriority(request.getPriority());
             serviceMappingRepository.save(entity);
             responseData.setMessage("Tạo mapping thành công");
-        } catch (Exception e) {
+        }catch (BaseException e) {
+            LOGGER.error(logPrefix + e.getMessage());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
             LOGGER.error(logPrefix + e.getMessage());
             responseData.setMessage("Tạo mapping thất bại");
         }
@@ -73,12 +77,16 @@ public class ServiceMappingServiceImpl extends BaseService implements IServiceMa
                     serviceMappingRepository.findById(mappingId)
                             .orElseThrow(() ->
                                     new BaseException(
-                                            404,
+                                            400,
                                             "Mapping không tồn tại"));
             entity.setPriority(priority);
             serviceMappingRepository.save(entity);
             responseData.setMessage("Cập nhật priority thành công");
-        } catch (Exception e) {
+        }catch (BaseException e) {
+            LOGGER.error(logPrefix + e.getMessage());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
             LOGGER.error(logPrefix + e.getMessage());
             responseData.setMessage("Cập nhật priority thất bại");
         }
@@ -94,12 +102,16 @@ public class ServiceMappingServiceImpl extends BaseService implements IServiceMa
                         serviceMappingRepository.findById(mappingId)
                                 .orElseThrow(() ->
                                         new BaseException(
-                                                404,
+                                                400,
                                                 "Mapping không tồn tại"));
                 serviceMappingRepository.delete(entity);
                 responseData.setMessage("Xóa mapping thành công");
 
-            } catch (Exception e) {
+            }catch (BaseException e) {
+                LOGGER.error(logPrefix + e.getMessage());
+                responseData.setMessage(e.getMessage());
+            }
+            catch (Exception e) {
                 LOGGER.error(logPrefix + e.getMessage());
                 responseData.setMessage("Xóa mapping thất bại");
             }
@@ -136,8 +148,13 @@ public class ServiceMappingServiceImpl extends BaseService implements IServiceMa
                                             400,
                                             "Không tìm thấy provider"));
             responseData.setData(mapping);
-        } catch (Exception e) {
+        }catch (BaseException e) {
             LOGGER.error(logPrefix + e.getMessage());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
+            LOGGER.error(logPrefix + e.getMessage());
+            responseData.setMessage("Lấy provider thất bại");
         }
         return responseData;
     }
@@ -184,8 +201,13 @@ public class ServiceMappingServiceImpl extends BaseService implements IServiceMa
                                         .compareTo(lowestCost) == 0)
                         .toList());
 
-            }catch (Exception e) {
+            }catch (BaseException e) {
                 LOGGER.error(logPrefix + e.getMessage());
+                responseData.setMessage(e.getMessage());
+            }
+            catch (Exception e) {
+                LOGGER.error(logPrefix + e.getMessage());
+                responseData.setMessage("Lấy provider thất bại");
             }
         return responseData;
     }

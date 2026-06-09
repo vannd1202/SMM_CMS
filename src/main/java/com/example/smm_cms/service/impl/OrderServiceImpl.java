@@ -167,7 +167,11 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
                                             404,
                                             "Order không tồn tại"));
             responseData.setData(order);
-        } catch (Exception e) {
+        }catch (BaseException e) {
+            LOGGER.warn(logPrefix + e.getMessage());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
             LOGGER.error(logPrefix + e.getMessage(), e);
         }
         return responseData;
@@ -192,6 +196,7 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
 
         } catch (Exception e) {
             LOGGER.error(logPrefix + e.getMessage(), e);
+            responseData.setMessage(e.getMessage());
         }
         return responseData;
     }

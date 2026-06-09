@@ -74,7 +74,12 @@ public class ProviderServiceImpl extends BaseService implements IProviderService
             provider.setApiKey(request.getApiKey());
             provider.setStatus(request.getStatus());
             providerRepository.save(provider);
-        } catch (Exception e) {
+        }catch (BaseException e) {
+            LOGGER.error("Lỗi----{}-----{}", logPrefix, e.getMessage());
+            responseData.setCode(e.getCode());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
             LOGGER.error("Lỗi----{}-----{}", logPrefix, e.getMessage());
             responseData.setCode(-1);
             responseData.setMessage("Cập nhật thất bai");
@@ -116,7 +121,12 @@ public class ProviderServiceImpl extends BaseService implements IProviderService
             ProviderEntity provider = providerRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Nhà cung cấp không tồn tại"));
             responseData.success(toResponse(provider));
-        } catch (Exception e) {
+        }catch (BaseException be){
+            LOGGER.error("Lỗi----{}-----{}", logPrefix, be.getMessage());
+            responseData.setCode(be.getCode());
+            responseData.setMessage(be.getMessage());
+        }
+        catch (Exception e) {
             LOGGER.error("Lỗi----{}-----{}", logPrefix, e.getMessage());
             responseData.setCode(-1);
             responseData.setMessage("Lấy thông tin thất bai");
@@ -127,43 +137,81 @@ public class ProviderServiceImpl extends BaseService implements IProviderService
     @Override
     public ResponseData<?> testConnection(Long id) {
         ResponseData<?> responseData = new ResponseData<>();
-        ProviderEntity provider = providerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Provider not found"));
+        try {
+            ProviderEntity provider = providerRepository.findById(id)
+                    .orElseThrow(() -> new BaseException(400,"Provider not found"));
 
-        String result = providerClient.testConnection(
-                provider.getApiUrl(),
-                provider.getApiKey()
-        );
-        responseData.setMessage(result);
+            String result = providerClient.testConnection(
+                    provider.getApiUrl(),
+                    provider.getApiKey()
+            );
+            responseData.setMessage(result);
+        }catch (BaseException e) {
+            LOGGER.error("Lỗi----{}-----{}", "Kiểm tra kết nối nhà cung cấp", e.getMessage());
+            responseData.setCode(e.getCode());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
+            LOGGER.error("Lỗi----{}-----{}", "Kiểm tra kết nối nhà cung cấp", e.getMessage());
+            responseData.setCode(-1);
+            responseData.setMessage("Kết nối thất bai");
+        }
+
         return responseData;
     }
 
     @Override
     public ResponseData<List<ProviderServiceResponse>> getServices(Long id) {
         ResponseData<List<ProviderServiceResponse>> responseData = new ResponseData<>();
-        ProviderEntity provider = providerRepository.findById(id)
-                .orElseThrow(() ->
-                        new BaseException(1001, "Provider không tồn tại"));
-        List<ProviderServiceResponse> data = providerClient.getServices(
-                provider.getApiUrl(),
-                provider.getApiKey()
-        );
-        responseData.setData(data);
+        try {
+            ProviderEntity provider = providerRepository.findById(id)
+                    .orElseThrow(() ->
+                            new BaseException(1001, "Provider không tồn tại"));
+            List<ProviderServiceResponse> data = providerClient.getServices(
+                    provider.getApiUrl(),
+                    provider.getApiKey()
+            );
+            responseData.setData(data);
+
+        }catch (BaseException e) {
+            LOGGER.error("Lỗi----{}-----{}", "Lấy dịch vụ từ nhà cung cấp", e.getMessage());
+            responseData.setCode(e.getCode());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
+            LOGGER.error("Lỗi----{}-----{}", "Lấy dịch vụ từ nhà cung cấp", e.getMessage());
+            responseData.setCode(-1);
+            responseData.setMessage("Lấy dịch vụ thất bai");
+        }
+
         return responseData;
     }
 
     @Override
     public ResponseData<?> getBalance(Long id) {
-        ResponseData<?> responseData = new ResponseData<>();
-        ProviderEntity provider = providerRepository.findById(id)
-                .orElseThrow(() ->
-                        new BaseException(1001, "Provider không tồn tại"));
+        ResponseData<ProviderEntity> responseData = new ResponseData<>();
+        try {
+            ProviderEntity provider = providerRepository.findById(id)
+                    .orElseThrow(() ->
+                            new BaseException(1001, "Provider không tồn tại"));
 
-        String response = providerClient.getBalance(
-                provider.getApiUrl(),
-                provider.getApiKey()
-        );
-        responseData.setMessage(response);
+            String response = providerClient.getBalance(
+                    provider.getApiUrl(),
+                    provider.getApiKey()
+            );
+            responseData.setMessage(response);
+
+        }catch (BaseException e) {
+            LOGGER.error("Lỗi----{}-----{}", "Lấy số dư từ nhà cung cấp", e.getMessage());
+            responseData.setCode(e.getCode());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
+            LOGGER.error("Lỗi----{}-----{}", "Lấy số dư từ nhà cung cấp", e.getMessage());
+            responseData.setCode(-1);
+            responseData.setMessage("Lấy số dư thất bai");
+        }
+
         return responseData;
     }
 
@@ -173,13 +221,14 @@ public class ProviderServiceImpl extends BaseService implements IProviderService
 
         String logPrefix = "Đồng bộ dịch vụ từ provider";
         ResponseData<String> responseData = new ResponseData<>();
+        try {
         ProviderEntity provider = providerRepository
                 .findById(providerId)
                 .orElseThrow(() ->
                         new BaseException(
                                 1001,
                                 "Provider không tồn tại"));
-        try {
+
 
 
             List<ProviderServiceResponse> services =
@@ -240,19 +289,32 @@ public class ProviderServiceImpl extends BaseService implements IProviderService
     @Transactional(readOnly = true)
     public ResponseData<?> getProviderServices(Long providerId) {
         ResponseData<List<ServiceResponse>> responseData = new ResponseData<>();
-        ProviderEntity provider = providerRepository
-                .findById(providerId)
-                .orElseThrow(() ->
-                        new BaseException(
-                                1001,
-                                "Provider không tồn tại"));
+        try {
+            ProviderEntity provider = providerRepository
+                    .findById(providerId)
+                    .orElseThrow(() ->
+                            new BaseException(
+                                    1001,
+                                    "Provider không tồn tại"));
 
-        List<ServiceResponse> data =
-                serviceRepository.findByProviderId(providerId)
-                        .stream()
-                        .map(this::toResponse)
-                        .toList();
-        responseData.setData(data);
+            List<ServiceResponse> data =
+                    serviceRepository.findByProviderId(providerId)
+                            .stream()
+                            .map(this::toResponse)
+                            .toList();
+            responseData.setData(data);
+
+        }catch (BaseException e) {
+            LOGGER.error("Lỗi----{}-----{}", "Lấy dịch vụ của nhà cung cấp", e.getMessage());
+            responseData.setCode(e.getCode());
+            responseData.setMessage(e.getMessage());
+        }
+        catch (Exception e) {
+            LOGGER.error("Lỗi----{}-----{}", "Lấy dịch vụ của nhà cung cấp", e.getMessage());
+            responseData.setCode(-1);
+            responseData.setMessage("Lấy dịch vụ thất bai");
+        }
+
 
         return responseData;
     }
