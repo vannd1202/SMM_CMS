@@ -45,4 +45,27 @@ public class ProviderController {
         return providerService.getAll(request);
     }
 
+    @GetMapping("/services/{id}")
+    @Operation(summary = "Lấy danh sách dịch vụ của nhà cung cấp")
+    public ResponseData<?> getProviderServices(
+            @PathVariable Long id) {
+
+        return providerService.getProviderServices(id);
+    }
+
+    @PostMapping("/sync-services/{id}")
+    @Operation(summary = "Đồng bộ dịch vụ từ nhà cung cấp")
+    public ResponseData<?> syncServices(
+            @PathVariable Long id) {
+
+        return providerService.syncServices(id);
+    }
+
+    @GetMapping("/{id}/provider-status")
+    public ResponseData<?> getProviderStatus(
+            @PathVariable Long id) {
+
+        return providerService.getProviderStatus(id);
+    }
+
 }

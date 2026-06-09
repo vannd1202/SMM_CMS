@@ -21,5 +21,4 @@ public class CustomerController {
         return userService.list(request);
     }
 
-
 }

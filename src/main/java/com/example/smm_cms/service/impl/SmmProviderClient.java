@@ -1,5 +1,7 @@
 package com.example.smm_cms.service.impl;
 
+import com.example.smm_cms.dto.response.order.ProviderCreateOrderResponse;
+import com.example.smm_cms.dto.response.order.ProviderStatusResponse;
 import com.example.smm_cms.dto.response.provider.ProviderServiceResponse;
 import com.example.smm_cms.service.ProviderClient;
 import lombok.RequiredArgsConstructor;
@@ -61,6 +63,48 @@ public class SmmProviderClient implements ProviderClient {
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(String.class)
+                .block();
+    }
+
+    @Override
+    public ProviderCreateOrderResponse createOrder(String apiUrl, String apiKey, Long serviceId, String target, Integer quantity) {
+        MultiValueMap<String, String> body =
+                new LinkedMultiValueMap<>();
+
+        body.add("key", apiKey);
+        body.add("action", "add");
+        body.add("service", String.valueOf(serviceId));
+        body.add("link", target);
+        body.add("quantity", String.valueOf(quantity));
+
+        return webClient.post()
+                .uri(apiUrl)
+                .contentType(
+                        MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(
+                        ProviderCreateOrderResponse.class)
+                .block();
+    }
+
+    @Override
+    public ProviderStatusResponse getStatus(String apiUrl, String apiKey, String orderId) {
+        MultiValueMap<String, String> body =
+                new LinkedMultiValueMap<>();
+
+        body.add("key", apiKey);
+        body.add("action", "status");
+        body.add("order", orderId);
+
+        return webClient.post()
+                .uri(apiUrl)
+                .contentType(
+                        MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(
+                        ProviderStatusResponse.class)
                 .block();
     }
 

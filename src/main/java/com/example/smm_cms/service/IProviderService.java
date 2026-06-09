@@ -22,4 +22,10 @@ public interface IProviderService {
     ResponseData<?> getBalance(Long id);
 
     //end các hàm test
+
+    ResponseData<?> syncServices(Long providerId);
+
+    ResponseData<?> getProviderServices(Long providerId);
+
+    ResponseData<?> getProviderStatus(Long orderId);
 }
