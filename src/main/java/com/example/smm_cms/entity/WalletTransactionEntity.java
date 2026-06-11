@@ -17,6 +17,7 @@ public class WalletTransactionEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id")
     private Long userId;
 
     private BigDecimal amount;
@@ -33,4 +34,11 @@ public class WalletTransactionEntity extends BaseEntity {
     private Long referenceId;
 
     private LocalDateTime createdDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "user_id",
+            insertable = false,
+            updatable = false)
+    private User user;
 }

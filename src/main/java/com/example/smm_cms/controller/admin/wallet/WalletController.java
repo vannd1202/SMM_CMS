@@ -1,14 +1,14 @@
-package com.example.smm_cms.controller.admin;
+package com.example.smm_cms.controller.admin.wallet;
 
 import com.example.smm_cms.base.ResponseData;
 import com.example.smm_cms.common.ApiPath;
+import com.example.smm_cms.dto.request.wallet.SearchWalletTransactionRequest;
 import com.example.smm_cms.dto.request.wallet.TopupRequest;
 import com.example.smm_cms.service.IWalletService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping(ApiPath.PUBLIC+"/wallet")
@@ -26,5 +26,9 @@ public class WalletController {
                 "Admin topup");
 
 
+    }
+    @GetMapping("/transactions")
+    public ResponseData<?> transactions(@ParameterObject SearchWalletTransactionRequest request) {
+        return walletService.searchTransactions(request);
     }
 }

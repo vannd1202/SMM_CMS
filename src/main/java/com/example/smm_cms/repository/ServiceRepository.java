@@ -9,12 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ServiceRepository extends JpaRepository<ServiceEntity, Long>,
-        JpaSpecificationExecutor<ServiceEntity> {
-
-    Optional<ServiceEntity> findByProviderIdAndProviderServiceId(
-                                                                    Long providerId,
-                                                                    Long providerServiceId);
+public interface ServiceRepository extends JpaRepository<ServiceEntity, Long>, JpaSpecificationExecutor<ServiceEntity> {
+    Optional<ServiceEntity> findByProviderIdAndProviderServiceId(Long providerId, Long providerServiceId);
     List<ServiceEntity> findByProviderId(Long providerId);
+    Integer countByProviderId(Long providerId);
 
 }

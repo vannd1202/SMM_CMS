@@ -2,6 +2,7 @@ package com.example.smm_cms.service;
 
 import com.example.smm_cms.dto.response.order.ProviderCreateOrderResponse;
 import com.example.smm_cms.dto.response.order.ProviderStatusResponse;
+import com.example.smm_cms.dto.response.provider.ProviderBalanceResponse;
 import com.example.smm_cms.dto.response.provider.ProviderServiceResponse;
 
 import java.util.List;
@@ -11,7 +12,7 @@ public interface ProviderClient {
 
     List<ProviderServiceResponse> getServices(String apiUrl, String apiKey);
 
-    String getBalance(String apiUrl, String apiKey);
+    ProviderBalanceResponse getBalance(String apiUrl, String apiKey);
 
     ProviderCreateOrderResponse createOrder(String apiUrl, String apiKey, Long serviceId, String target, Integer quantity);
 

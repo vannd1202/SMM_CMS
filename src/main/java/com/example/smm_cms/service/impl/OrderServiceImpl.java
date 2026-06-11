@@ -7,10 +7,16 @@ import com.example.smm_cms.base.ResponsePage;
 import com.example.smm_cms.common.OrderStatus;
 import com.example.smm_cms.dto.request.order.CreateOrderRequest;
 import com.example.smm_cms.dto.request.order.SearchOrderRequest;
+import com.example.smm_cms.dto.request.order.admin.SearchOrderAdminRequest;
 import com.example.smm_cms.dto.response.order.CreateOrderResponse;
 import com.example.smm_cms.dto.response.order.OrderResponse;
 import com.example.smm_cms.dto.response.order.ProviderCreateOrderResponse;
 import com.example.smm_cms.dto.response.order.ProviderStatusResponse;
+import com.example.smm_cms.dto.response.order.admin.OrderAdminResponse;
+import com.example.smm_cms.dto.response.order.admin.OrderDetailResponse;
+import com.example.smm_cms.dto.response.order.admin.OrderHistoryResponse;
+import com.example.smm_cms.dto.response.order.admin.OrderStatisticResponse;
+import com.example.smm_cms.dto.response.wallet.WalletTransactionResponse;
 import com.example.smm_cms.entity.*;
 import com.example.smm_cms.repository.*;
 import com.example.smm_cms.service.IOrderService;
@@ -18,13 +24,16 @@ import com.example.smm_cms.service.IWalletService;
 import com.example.smm_cms.service.ProviderClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -37,6 +46,7 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
     private final OrderHistoryRepository orderHistoryRepository;
     private final IWalletService walletService;
     private final UserRepository userRepository;
+    private final WalletTransactionRepository walletTransactionRepository;
 
     @Override
     @Transactional
@@ -296,6 +306,189 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
         return responseData;
     }
 
+    @Override
+    public ResponseData<?> adminSearch(SearchOrderAdminRequest request) {
+        String logPrefix =
+                "[OrderServiceImpl][searchAdmin] - ";
+
+        ResponseData<ResponsePage<OrderAdminResponse>>
+                responseData = new ResponseData<>();
+
+        try {
+
+            Specification<OrderEntity> spec =
+                    (root, query, cb) -> cb.conjunction();
+
+            if (request.getId() != null) {
+
+                spec = spec.and(
+                        (root, query, cb) ->
+                                cb.equal(
+                                        root.get("id"),
+                                        request.getId()));
+            }
+
+            if (StringUtils.hasText(
+                    request.getProviderOrderId())) {
+
+                spec = spec.and(
+                        (root, query, cb) ->
+                                cb.equal(
+                                        root.get("providerOrderId"),
+                                        request.getProviderOrderId()));
+            }
+
+            if (request.getUserId() != null) {
+
+                spec = spec.and(
+                        (root, query, cb) ->
+                                cb.equal(
+                                        root.get("user")
+                                                .get("id"),
+                                        request.getUserId()));
+            }
+
+            if (request.getPanelServiceId() != null) {
+
+                spec = spec.and(
+                        (root, query, cb) ->
+                                cb.equal(
+                                        root.get("panelService")
+                                                .get("id"),
+                                        request.getPanelServiceId()));
+            }
+
+            if (request.getStatus() != null) {
+
+                spec = spec.and(
+                        (root, query, cb) ->
+                                cb.equal(
+                                        root.get("status"),
+                                        request.getStatus()));
+            }
+
+            if (request.getFromDate() != null) {
+
+                spec = spec.and(
+                        (root, query, cb) ->
+                                cb.greaterThanOrEqualTo(
+                                        root.get("createdDate"),
+                                        request.getFromDate()
+                                                .atStartOfDay()));
+            }
+
+            if (request.getToDate() != null) {
+
+                spec = spec.and(
+                        (root, query, cb) ->
+                                cb.lessThanOrEqualTo(
+                                        root.get("createdDate"),
+                                        request.getToDate()
+                                                .atTime(
+                                                        23,
+                                                        59,
+                                                        59)));
+            }
+
+            Page<OrderEntity> page =
+                    orderRepository.findAll(
+                            spec,
+                            request.pageable());
+
+            List<OrderAdminResponse> content =
+                    page.getContent()
+                            .stream()
+                            .map(this::toAdminResponse)
+                            .toList();
+
+            responseData.setData(new ResponsePage<>(page, content));
+
+        } catch (Exception e) {
+            LOGGER.error(
+                    logPrefix + e.getMessage(),
+                    e);
+
+            responseData.setCode(500);
+            responseData.setMessage(
+                    "Internal Server Error");
+        }
+        return responseData;
+    }
+
+    @Override
+    public ResponseData<?> getDetail(Long orderId) {
+        String logPrefix =
+                "[OrderServiceImpl][getDetail] - ";
+
+        ResponseData<OrderDetailResponse>
+                responseData = new ResponseData<>();
+
+        try {
+
+            OrderEntity order =
+                    orderRepository.findById(orderId)
+                            .orElseThrow(() ->
+                                    new BaseException(
+                                            404,
+                                            "Order không tồn tại"));
+
+            List<OrderHistoryResponse>
+                    histories =
+                    orderHistoryRepository
+                            .findByOrderIdOrderByCreatedDateDesc(
+                                    orderId)
+                            .stream()
+                            .map(this::toHistoryResponse)
+                            .toList();
+
+            List<WalletTransactionResponse>
+                    walletTransactions =
+                    walletTransactionRepository
+                            .findByReferenceIdOrderByCreatedDateDesc(
+                                    orderId)
+                            .stream()
+                            .map(this::toWalletResponse)
+                            .toList();
+
+            OrderDetailResponse response =
+                    OrderDetailResponse.builder()
+                            .order(
+                                    toAdminResponse(
+                                            order))
+                            .histories(
+                                    histories)
+                            .walletTransactions(
+                                    walletTransactions)
+                            .build();
+
+            responseData.setData(response);
+
+        } catch (BaseException e) {
+
+            LOGGER.warn(
+                    logPrefix + e.getMessage());
+
+            responseData.setCode(
+                    e.getCode());
+
+            responseData.setMessage(
+                    e.getMessage());
+
+        } catch (Exception e) {
+
+            LOGGER.error(
+                    logPrefix + e.getMessage(),
+                    e);
+
+            responseData.setCode(500);
+            responseData.setMessage(
+                    "Internal Server Error");
+        }
+
+        return responseData;
+    }
+
+
     private OrderResponse toResponse(
             OrderEntity entity) {
 
@@ -403,6 +596,213 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
             LOGGER.error(logPrefix + e.getMessage(), e);
             responseData.setMessage("Sync order thất bại");
         }
+        return responseData;
+    }
+
+    @Override
+    public ResponseData<?> getHistory(Long orderId) {
+
+        String logPrefix =
+                "[OrderServiceImpl][getHistory] - ";
+
+        ResponseData<List<OrderHistoryResponse>>
+                responseData = new ResponseData<>();
+
+        try {
+
+            OrderEntity order =
+                    orderRepository.findById(orderId)
+                            .orElseThrow(() ->
+                                    new BaseException(
+                                            400,
+                                            "Order không tồn tại"));
+            List<OrderHistoryResponse>
+                    histories =
+                    orderHistoryRepository
+                            .findByOrderIdOrderByCreatedDateDesc(
+                                    order.getId())
+                            .stream()
+                            .map(this::toHistoryResponse)
+                            .toList();
+
+            responseData.setData(
+                    histories);
+
+        } catch (BaseException e) {
+
+            LOGGER.warn(
+                    logPrefix + e.getMessage());
+
+            responseData.setCode(
+                    e.getCode());
+
+            responseData.setMessage(
+                    e.getMessage());
+        }
+        catch (Exception e) {
+
+            LOGGER.error(
+                    logPrefix + e.getMessage(),
+                    e);
+
+            responseData.setCode(500);
+            responseData.setMessage(
+                    "Internal Server Error");
+        }
+        return responseData;
+    }
+
+    @Override
+    public ResponseData<?> refund(Long orderId, String reason) {
+
+        ResponseData<String> responseData =
+                new ResponseData<>();
+
+        try {
+            OrderEntity order =
+                    orderRepository.findById(orderId)
+                            .orElseThrow(() ->
+                                    new BaseException(
+                                            400,
+                                            "Order không tồn tại"));
+            if (Boolean.TRUE.equals(
+                    order.getRefunded())) {
+
+                throw new BaseException(
+                        400,
+                        "Order đã được hoàn tiền");
+            }
+
+            walletService.refundOrder(
+                    order.getUser().getId(),
+                    order.getAmount(),
+                    order.getId(),
+                    reason);
+
+            OrderStatus oldStatus =
+                    order.getStatus();
+
+            order.setRefunded(true);
+            order.setRefundedDate(
+                    LocalDateTime.now());
+            order.setRefundReason(reason);
+            order.setStatus(
+                    OrderStatus.FAILED);
+
+            orderRepository.save(order);
+
+            saveHistory(
+                    order,
+                    oldStatus,
+                    OrderStatus.FAILED,
+                    "Manual refund: " + reason);
+
+            responseData.setData(
+                    "Refund thành công");
+
+        } catch (BaseException e) {
+
+            responseData.setCode(
+                    e.getCode());
+
+            responseData.setMessage(
+                    e.getMessage());
+        }catch (Exception e) {
+            LOGGER.error(
+                    "Refund order failed: "
+                            + orderId
+                            + " - "
+                            + e.getMessage(),
+                    e);
+
+            responseData.setCode(500);
+            responseData.setMessage(
+                    "Refund thất bại");
+        }
+
+
+        return responseData;
+    }
+
+    @Override
+    public ResponseData<?> statistic() {
+        String logPrefix =
+                "[OrderServiceImpl][statistic] - ";
+
+        ResponseData<OrderStatisticResponse>
+                responseData = new ResponseData<>();
+
+        try {
+
+            BigDecimal revenue =
+                    Optional.ofNullable(
+                                    orderRepository.sumRevenue())
+                            .orElse(BigDecimal.ZERO);
+
+            BigDecimal cost =
+                    Optional.ofNullable(
+                                    orderRepository.sumCost())
+                            .orElse(BigDecimal.ZERO);
+
+            BigDecimal profit =
+                    revenue.subtract(cost);
+            LOGGER.info(
+                    "Revenue={}, Cost={}",
+                    revenue,
+                    cost);
+            OrderStatisticResponse response =
+                    OrderStatisticResponse.builder()
+                            .creating(
+                                    orderRepository.countByStatus(
+                                            OrderStatus.CREATING))
+                            .pending(
+                                    orderRepository.countByStatus(
+                                            OrderStatus.PENDING))
+                            .processing(
+                                    orderRepository.countByStatus(
+                                            OrderStatus.PROCESSING))
+                            .completed(
+                                    orderRepository.countByStatus(
+                                            OrderStatus.COMPLETED))
+                            .partial(
+                                    orderRepository.countByStatus(
+                                            OrderStatus.PARTIAL))
+                            .cancelled(
+                                    orderRepository.countByStatus(
+                                            OrderStatus.CANCELED))
+                            .failed(
+                                    orderRepository.countByStatus(
+                                            OrderStatus.FAILED))
+                            .refunded(
+                                    orderRepository.countByRefundedTrue())
+                            .totalRevenue(
+                                    revenue.setScale(
+                                            2,
+                                            RoundingMode.HALF_UP))
+                            .totalCost(
+                                    cost.setScale(
+                                            2,
+                                            RoundingMode.HALF_UP))
+                            .totalProfit(
+                                    profit.setScale(
+                                            2,
+                                            RoundingMode.HALF_UP))
+                            .build();
+
+            responseData.setData(
+                    response);
+
+        } catch (Exception e) {
+
+            LOGGER.error(
+                    logPrefix + e.getMessage(),
+                    e);
+
+            responseData.setCode(500);
+            responseData.setMessage(
+                    "Internal Server Error");
+        }
+
         return responseData;
     }
 
@@ -544,4 +944,80 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
         orderHistoryRepository.save(history);
     }
 
+    private OrderAdminResponse toAdminResponse(
+            OrderEntity entity) {
+
+        return OrderAdminResponse.builder()
+                .id(entity.getId())
+                .userId(
+                        entity.getUser()
+                                .getId())
+                .username(
+                        entity.getUser()
+                                .getUsername())
+                .panelServiceName(
+                        entity.getPanelService()
+                                .getName())
+                .providerName(
+                        entity.getMapping()
+                                .getProviderService()
+                                .getProvider()
+                                .getName())
+                .providerOrderId(
+                        entity.getProviderOrderId())
+                .target(
+                        entity.getTarget())
+                .quantity(
+                        entity.getQuantity())
+                .amount(
+                        entity.getAmount())
+                .status(
+                        entity.getStatus())
+                .refunded(
+                        entity.getRefunded())
+                .createdDate(
+                        entity.getCreatedDate())
+                .build();
+    }
+
+    private OrderHistoryResponse toHistoryResponse(
+            OrderHistoryEntity entity) {
+
+        return OrderHistoryResponse.builder()
+                .id(entity.getId())
+                .oldStatus(
+                        entity.getOldStatus())
+                .newStatus(
+                        entity.getNewStatus())
+                .note(
+                        entity.getNote())
+                .createdDate(
+                        entity.getCreatedDate())
+                .build();
+    }
+
+    private WalletTransactionResponse toWalletResponse(
+            WalletTransactionEntity entity) {
+
+        return WalletTransactionResponse.builder()
+                .id(entity.getId())
+                .userId(entity.getUserId())
+                .username(
+                        entity.getUser() != null
+                                ? entity.getUser().getUsername()
+                                : null)
+                .type(entity.getType())
+                .amount(entity.getAmount())
+                .balanceBefore(
+                        entity.getBalanceBefore())
+                .balanceAfter(
+                        entity.getBalanceAfter())
+                .referenceId(
+                        entity.getReferenceId())
+                .note(
+                        entity.getNote())
+                .createdDate(
+                        entity.getCreatedDate())
+                .build();
+    }
 }

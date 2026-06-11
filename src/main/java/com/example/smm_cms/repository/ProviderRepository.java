@@ -11,4 +11,5 @@ import org.springframework.stereotype.Repository;
 public interface ProviderRepository extends JpaRepository<ProviderEntity, Long> {
 
     Page<ProviderEntity> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
 }

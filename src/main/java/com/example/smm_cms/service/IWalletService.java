@@ -1,6 +1,7 @@
 package com.example.smm_cms.service;
 
 import com.example.smm_cms.base.ResponseData;
+import com.example.smm_cms.dto.request.wallet.SearchWalletTransactionRequest;
 
 import java.math.BigDecimal;
 
@@ -20,4 +21,6 @@ public interface IWalletService {
             BigDecimal amount,
             Long orderId,
             String reason);
+    ResponseData<?> searchTransactions(
+            SearchWalletTransactionRequest request);
 }

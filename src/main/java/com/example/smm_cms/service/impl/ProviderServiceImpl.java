@@ -9,6 +9,7 @@ import com.example.smm_cms.dto.request.provider.ProviderResponse;
 import com.example.smm_cms.dto.request.provider.SearchProviderRequest;
 import com.example.smm_cms.dto.response.order.ProviderStatusResponse;
 import com.example.smm_cms.dto.response.provider.CreateProviderRequest;
+import com.example.smm_cms.dto.response.provider.ProviderBalanceResponse;
 import com.example.smm_cms.dto.response.provider.ProviderServiceResponse;
 import com.example.smm_cms.dto.response.provider.UpdateProviderRequest;
 import com.example.smm_cms.dto.response.service.ServiceResponse;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -189,17 +191,18 @@ public class ProviderServiceImpl extends BaseService implements IProviderService
 
     @Override
     public ResponseData<?> getBalance(Long id) {
-        ResponseData<ProviderEntity> responseData = new ResponseData<>();
+        ResponseData<ProviderBalanceResponse> responseData = new ResponseData<>();
         try {
             ProviderEntity provider = providerRepository.findById(id)
                     .orElseThrow(() ->
                             new BaseException(1001, "Provider không tồn tại"));
 
-            String response = providerClient.getBalance(
+            ProviderBalanceResponse data = providerClient.getBalance(
                     provider.getApiUrl(),
                     provider.getApiKey()
             );
-            responseData.setMessage(response);
+            data.setBalance(data.getBalance().setScale(2, BigDecimal.ROUND_HALF_UP));
+            responseData.setData(data);
 
         }catch (BaseException e) {
             LOGGER.error("Lỗi----{}-----{}", "Lấy số dư từ nhà cung cấp", e.getMessage());

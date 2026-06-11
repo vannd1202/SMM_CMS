@@ -23,6 +23,10 @@ public class User extends BaseEntity {
 
     private String password;
 
+    private String email;
+
+    private Boolean active;
+
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
 

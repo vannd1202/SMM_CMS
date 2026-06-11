@@ -2,6 +2,7 @@ package com.example.smm_cms.service.impl;
 
 import com.example.smm_cms.dto.response.order.ProviderCreateOrderResponse;
 import com.example.smm_cms.dto.response.order.ProviderStatusResponse;
+import com.example.smm_cms.dto.response.provider.ProviderBalanceResponse;
 import com.example.smm_cms.dto.response.provider.ProviderServiceResponse;
 import com.example.smm_cms.service.ProviderClient;
 import lombok.RequiredArgsConstructor;
@@ -52,18 +53,19 @@ public class SmmProviderClient implements ProviderClient {
     }
 
     @Override
-    public String getBalance(String apiUrl, String apiKey) {
+    public ProviderBalanceResponse getBalance(String apiUrl, String apiKey) {
+
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("key", apiKey);
         body.add("action", "balance");
-
-        return webClient.post()
+        ProviderBalanceResponse data = webClient.post()
                 .uri(apiUrl)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue(body)
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(ProviderBalanceResponse.class)
                 .block();
+        return data;
     }
 
     @Override
