@@ -1,6 +1,9 @@
 package com.example.smm_cms.common;
 
 public enum OrderStatus {
+
+    CREATING,
+
     PENDING,
 
     PROCESSING,
@@ -11,7 +14,7 @@ public enum OrderStatus {
 
     PARTIAL,
 
-    CANCELED,
+    FAILED,
 
-    FAILED
+    CANCELED
 }

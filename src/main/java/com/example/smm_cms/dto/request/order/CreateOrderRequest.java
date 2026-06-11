@@ -19,5 +19,7 @@ public class CreateOrderRequest {
     @Min(1)
     private Integer quantity;
 
+    private Long userId;
+
 
 }

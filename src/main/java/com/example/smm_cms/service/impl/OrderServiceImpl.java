@@ -12,11 +12,9 @@ import com.example.smm_cms.dto.response.order.OrderResponse;
 import com.example.smm_cms.dto.response.order.ProviderCreateOrderResponse;
 import com.example.smm_cms.dto.response.order.ProviderStatusResponse;
 import com.example.smm_cms.entity.*;
-import com.example.smm_cms.repository.OrderHistoryRepository;
-import com.example.smm_cms.repository.OrderRepository;
-import com.example.smm_cms.repository.PanelRepository;
-import com.example.smm_cms.repository.ServiceMappingRepository;
+import com.example.smm_cms.repository.*;
 import com.example.smm_cms.service.IOrderService;
+import com.example.smm_cms.service.IWalletService;
 import com.example.smm_cms.service.ProviderClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -31,32 +31,56 @@ import java.util.List;
 @Transactional
 public class OrderServiceImpl extends BaseService implements IOrderService {
     private final OrderRepository orderRepository;
-
     private final PanelRepository panelServiceRepository;
-
     private final ServiceMappingRepository serviceMappingRepository;
-
     private final ProviderClient providerClient;
     private final OrderHistoryRepository orderHistoryRepository;
+    private final IWalletService walletService;
+    private final UserRepository userRepository;
 
     @Override
-    public ResponseData<?> create(CreateOrderRequest request) {
-        String logPrefix = "[OrderServiceImpl][create] - ";
-        ResponseData<CreateOrderResponse> responseData = new ResponseData<>();
+    @Transactional
+    public ResponseData<?> create(
+            CreateOrderRequest request) {
+
+        String logPrefix =
+                "[OrderServiceImpl][create] - ";
+
+        ResponseData<CreateOrderResponse> responseData =
+                new ResponseData<>();
+
         try {
+            User user =
+                    userRepository
+                            .findById(
+                                    request.getUserId())
+                            .orElseThrow(() ->
+                                    new BaseException(
+                                            400,
+                                            "User không tồn tại"));
+            /*
+             * 1. Validate Panel Service
+             */
             PanelServiceEntity panelService =
                     panelServiceRepository
-                            .findById(request.getPanelServiceId())
+                            .findById(
+                                    request.getPanelServiceId())
                             .orElseThrow(() ->
                                     new BaseException(
                                             400,
                                             "Panel service không tồn tại"));
-            if (!panelService.getActive()) {
+
+            if (!Boolean.TRUE.equals(
+                    panelService.getActive())) {
 
                 throw new BaseException(
                         400,
                         "Dịch vụ đang tạm ngưng");
             }
+
+            /*
+             * 2. Tìm provider ưu tiên cao nhất
+             */
             ServiceMappingEntity mapping =
                     serviceMappingRepository
                             .findFirstByPanelServiceIdOrderByPriorityAsc(
@@ -72,48 +96,36 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
             ProviderEntity provider =
                     providerService.getProvider();
 
-            ProviderCreateOrderResponse providerResponse =
-                    providerClient.createOrder(
-                            provider.getApiUrl(),
-                            provider.getApiKey(),
-                            providerService.getProviderServiceId(),
-                            request.getTarget(),
-                            request.getQuantity());
-            if (providerResponse == null) {
-
-                throw new BaseException(
-                        500,
-                        "Provider không phản hồi");
-            }
-            if (providerResponse.getError() != null) {
-
-                throw new BaseException(
-                        400,
-                        providerResponse.getError());
-            }
-            if (providerResponse.getOrder() == null) {
-
-                throw new BaseException(
-                        400,
-                        "Provider không trả về order id");
-            }
+            /*
+             * 3. Tính tiền
+             */
             BigDecimal amount =
                     panelService.getSellPrice()
                             .multiply(
                                     BigDecimal.valueOf(
                                             request.getQuantity()))
                             .divide(
-                                    BigDecimal.valueOf(1000));
+                                    BigDecimal.valueOf(1000),
+                                    2,
+                                    RoundingMode.HALF_UP);
 
+            /*
+             * 4. Tạo Order trước
+             */
             OrderEntity order =
                     new OrderEntity();
+            order.setUser(user);
+            order.setPanelService(
+                    panelService);
 
-            order.setPanelService(panelService);
-            order.setMapping(mapping);
-//            order.setProviderOrderId();
-            order.setTarget(request.getTarget());
+            order.setMapping(
+                    mapping);
 
-            order.setQuantity(request.getQuantity());
+            order.setTarget(
+                    request.getTarget());
+
+            order.setQuantity(
+                    request.getQuantity());
 
             order.setCostPrice(
                     providerService.getRate());
@@ -121,19 +133,87 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
             order.setSellPrice(
                     panelService.getSellPrice());
 
-            order.setAmount(amount);
-
-            order.setProviderOrderId(
-                    providerResponse.getOrder());
+            order.setAmount(
+                    amount);
 
             order.setStatus(
-                    OrderStatus.PENDING);
+                    OrderStatus.CREATING);
+
+            order.setRefunded(false);
 
             orderRepository.save(order);
 
+            /*
+             * 5. Trừ tiền Wallet
+             * TODO Sprint Wallet
+             */
+        walletService.deductOrder(
+                user.getId(),
+                amount,
+                order.getId());
+
+            /*
+             * 6. Gọi Provider
+             */
+            try {
+
+                ProviderCreateOrderResponse providerResponse =
+                        providerClient.createOrder(
+                                provider.getApiUrl(),
+                                provider.getApiKey(),
+                                providerService.getProviderServiceId(),
+                                request.getTarget(),
+                                request.getQuantity());
+
+                if (providerResponse == null) {
+
+                    throw new BaseException(
+                            500,
+                            "Provider không phản hồi");
+                }
+
+                if (providerResponse.getError() != null) {
+
+                    throw new BaseException(
+                            400,
+                            providerResponse.getError());
+                }
+
+                if (providerResponse.getOrder() == null) {
+
+                    throw new BaseException(
+                            400,
+                            "Provider không trả về order id");
+                }
+
+                /*
+                 * 7. Thành công
+                 */
+                order.setProviderOrderId(
+                        providerResponse.getOrder());
+
+                order.setStatus(
+                        OrderStatus.PENDING);
+
+                orderRepository.save(order);
+
+            } catch (Exception ex) {
+
+                /*
+                 * 8. Refund nếu cần
+                 */
+                LOGGER.info("chạy hoàn tiền");
+                refundOrderIfNeeded(
+                        order,
+                        ex.getMessage());
+
+                throw ex;
+            }
+
             CreateOrderResponse response =
                     CreateOrderResponse.builder()
-                            .id(order.getId())
+                            .id(
+                                    order.getId())
                             .providerOrderId(
                                     order.getProviderOrderId())
                             .status(
@@ -141,20 +221,35 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
                             .amount(
                                     order.getAmount())
                             .build();
+
+            responseData.setCode(0);
+            responseData.setMessage("Successful!");
             responseData.setData(response);
 
-        } catch (BaseException e) {
-            LOGGER.warn(logPrefix + e.getMessage());
-            responseData.setMessage(e.getMessage());
-        }
-        catch (Exception e) {
-            LOGGER.error(logPrefix + e.getMessage(), e);
-        }
+        } catch (BaseException ex) {
 
+            LOGGER.warn(
+                    logPrefix + ex.getMessage());
+
+            responseData.setCode(
+                    ex.getCode());
+
+            responseData.setMessage(
+                    ex.getMessage());
+
+        } catch (Exception ex) {
+
+            LOGGER.error(
+                    logPrefix + ex.getMessage(),
+                    ex);
+
+            responseData.setCode(500);
+            responseData.setMessage(
+                    "Internal Server Error");
+        }
 
         return responseData;
     }
-
     @Override
     public ResponseData<?> getById(Long id) {
         String logPrefix = "[OrderServiceImpl][getById] - ";
@@ -385,5 +480,68 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
         }
     }
 
+    @Transactional
+    public void refundOrderIfNeeded(
+            OrderEntity order,
+            String reason) {
+
+        if (Boolean.TRUE.equals(
+                order.getRefunded())) {
+
+            return;
+        }
+        OrderStatus oldStatus =
+                order.getStatus();
+
+        walletService.refundOrder(
+                order.getUser().getId(),
+                order.getAmount(),
+                order.getId(),
+                reason);
+
+        order.setRefunded(true);
+
+        order.setRefundedDate(
+                LocalDateTime.now());
+
+        order.setRefundReason(
+                reason);
+
+        order.setStatus(
+                OrderStatus.FAILED);
+
+        order.setFailedDate(
+                LocalDateTime.now());
+        orderRepository.save(order);
+
+        saveHistory(
+                order,
+                oldStatus,
+                OrderStatus.FAILED,
+                reason);
+    }
+
+
+    private void saveHistory(
+            OrderEntity order,
+            OrderStatus oldStatus,
+            OrderStatus newStatus,
+            String note) {
+
+        OrderHistoryEntity history =
+                new OrderHistoryEntity();
+
+        history.setOrder(order);
+
+        history.setOldStatus(
+                oldStatus.name());
+
+        history.setNewStatus(
+                newStatus.name());
+
+        history.setNote(note);
+
+        orderHistoryRepository.save(history);
+    }
 
 }

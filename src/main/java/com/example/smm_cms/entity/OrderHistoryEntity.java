@@ -22,4 +22,6 @@ public class OrderHistoryEntity extends BaseEntity {
 
     @Column(length = 1000)
     private String note;
+
+
 }

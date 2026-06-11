@@ -53,5 +53,16 @@ public class OrderEntity extends BaseEntity {
 
     private Integer syncCount;
 
+    @Column(nullable = false)
+    private Boolean refunded = false;
 
+    private LocalDateTime refundedDate;
+
+    private String refundReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    private LocalDateTime failedDate;
 }
