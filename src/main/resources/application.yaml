@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: SMM_CMS
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 745401873800-gl8e55dfcm8lmsbgh17fm2v2ujcq0pkv.apps.googleusercontent.com
+            client-secret: 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g
+            scope:
+              - openid
+              - profile
+              - email
+
+  # ===============================
+  # DATABASE (MySQL)
+  # ===============================
+  datasource:
+    url: jdbc:mysql://localhost:3306/smm_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: 12345678
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ===============================
+  # JPA / HIBERNATE
+  # ===============================
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
+
+  jackson:
+    time-zone: Asia/Ho_Chi_Minh
+
+  # ===============================
+  # CORS (Spring Web)
+  # ===============================
+  web:
+    cors:
+      allowed-origins: http://localhost:3000,http://localhost:5173
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: '*'
+
+# ===============================
+# SERVER
+# ===============================
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# ===============================
+# JWT CONFIG
+# ===============================
+jwt:
+  secret: 8f7d9a1c2e3b4f5a6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a
+  expiration: 86400000
+
+# ===============================
+# LOGGING
+# ===============================
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+      hibernate:
+        SQL: DEBUG
+
+# ===============================
+# CUSTOM API KEYS
+# ===============================
+api:
+  smm: 0400b4ba713e62c09de12dd32b77db49
+  smm.vandc: 117b72eaf3deb98fb37a8ee317c563df
+
+app:
+  oauth2:
+    redirect-success: http://localhost:3000/oauth2/success
