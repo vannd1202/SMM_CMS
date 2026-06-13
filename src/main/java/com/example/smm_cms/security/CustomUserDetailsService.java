@@ -28,7 +28,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         String password = user.getPassword() != null ? user.getPassword() : "";
 
-        return new org.springframework.security.core.userdetails.User(
+        return new CustomUserDetails(
+                user.getId(),
                 user.getUsername(),
                 password,
                 mapRoles(user)
