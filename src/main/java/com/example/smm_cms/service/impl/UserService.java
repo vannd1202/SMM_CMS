@@ -76,6 +76,7 @@ public class UserService extends BaseService implements IUserService {
             String token = jwtService.generateToken(user.getUsername());
 
              response= LoginResponse.builder()
+                     .id(user.getId())
                     .accessToken(token)
                     .tokenType("Bearer")
                     .username(user.getUsername())
