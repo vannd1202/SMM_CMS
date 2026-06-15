@@ -19,8 +19,8 @@ import java.util.List;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final JwtAuthenticationFilter jwtFilter;
+    private final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -46,19 +46,27 @@ public class SecurityConfig {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
+
                 .sessionManagement(
                         s -> s.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS))
+                                SessionCreationPolicy.IF_REQUIRED))
+
                 .authorizeHttpRequests(auth ->
                         auth
                                 .requestMatchers(
                                         "/auth/**",
+                                        "/oauth2/**",
+                                        "/login/**",
                                         "/swagger-ui/**",
                                         "/v3/api-docs/**",
                                         "/public/**")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated())
+
+                .oauth2Login(oauth2 ->
+                        oauth2.successHandler(oauth2LoginSuccessHandler))
+
                 .addFilterBefore(
                         jwtFilter,
                         UsernamePasswordAuthenticationFilter.class)
