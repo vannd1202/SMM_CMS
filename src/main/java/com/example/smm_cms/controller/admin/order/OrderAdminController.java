@@ -10,7 +10,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(ApiPath.PUBLIC+"/admin-order")
+@RequestMapping(ApiPath.PRIVATE+"/admin-order")
 @RequiredArgsConstructor
 public class OrderAdminController {
     private final IOrderService orderService;
