@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +40,8 @@ public class WalletServiceImpl extends BaseService implements IWalletService {
                             .orElseThrow(() ->new BaseException(400,"Không tìm thấy người dùng"));
 
             BigDecimal before =
-                    user.getBalance();
+                    Optional.ofNullable(user.getBalance())
+                            .orElse(BigDecimal.ZERO);
 
             BigDecimal after =
                     before.add(amount);
