@@ -1,4 +1,4 @@
-package com.example.smm_cms.controller.provider;
+package com.example.smm_cms.controller.admin.provider;
 
 import com.example.smm_cms.base.ResponseData;
 import com.example.smm_cms.common.ApiPath;
@@ -13,7 +13,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(ApiPath.PUBLIC+"/provider")
+@RequestMapping(ApiPath.PRIVATE+"/provider")
 @RequiredArgsConstructor
 public class ProviderController {
     private final IProviderService providerService;

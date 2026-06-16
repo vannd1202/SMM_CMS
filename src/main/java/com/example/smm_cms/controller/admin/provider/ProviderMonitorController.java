@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(ApiPath.PUBLIC+"/provider-monitor")
+@RequestMapping(ApiPath.PRIVATE+"/provider-monitor")
 @RequiredArgsConstructor
 public class ProviderMonitorController {
     private final IProviderMonitorService providerMonitorService;

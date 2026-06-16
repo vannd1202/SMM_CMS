@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(ApiPath.PUBLIC + "/report")
+@RequestMapping(ApiPath.PRIVATE + "/report")
 @RequiredArgsConstructor
 public class ReportController {
     private final IReportService reportService;

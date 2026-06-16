@@ -8,7 +8,6 @@ import lombok.Setter;
 @Setter
 public class SearchPanelServiceRequest  extends PageRequest {
     private String name;
-
     private Boolean active;
 
 }
