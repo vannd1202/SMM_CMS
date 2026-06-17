@@ -20,6 +20,7 @@ import com.example.smm_cms.dto.response.wallet.WalletTransactionResponse;
 import com.example.smm_cms.entity.*;
 import com.example.smm_cms.repository.*;
 import com.example.smm_cms.service.IOrderService;
+import com.example.smm_cms.service.ITelegramService;
 import com.example.smm_cms.service.IWalletService;
 import com.example.smm_cms.service.ProviderClient;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,7 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
     private final IWalletService walletService;
     private final UserRepository userRepository;
     private final WalletTransactionRepository walletTransactionRepository;
+    private final ITelegramService telegramService;
 
     @Override
     @Transactional
@@ -151,7 +153,9 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
 
             order.setRefunded(false);
 
-            orderRepository.save(order);
+            order =  orderRepository.save(order);
+
+            telegramService.sendNewOrderMessage(order);
 
             /*
              * 5. Trừ tiền Wallet
@@ -205,7 +209,9 @@ public class OrderServiceImpl extends BaseService implements IOrderService {
                 order.setStatus(
                         OrderStatus.PENDING);
 
-                orderRepository.save(order);
+                order = orderRepository.save(order);
+
+                telegramService.sendSuccessOrderMessage(order);
 
             } catch (Exception ex) {
 

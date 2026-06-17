@@ -10,6 +10,13 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 public class TelegramProperties {
-    private String botToken;
-    private String chatId;
+    private BotConfig newOrder;
+    private BotConfig successOrder;
+
+    @Getter
+    @Setter
+    public static class BotConfig {
+        private String botToken;
+        private String chatId;
+    }
 }
