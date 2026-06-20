@@ -1,0 +1,27 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ "develop" ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stop old stack
+        run: docker-compose down || true
+
+      - name: Remove dangling build cache
+        run: docker builder prune -af || true
+
+      - name: Create shared network
+        run: docker network create app-network || true
+
+      - name: Build & run
+        run: docker-compose up -d --build
+
+      - name: Cleanup
+        run: docker image prune -f
