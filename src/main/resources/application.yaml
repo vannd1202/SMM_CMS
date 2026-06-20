@@ -82,3 +82,11 @@ api:
 app:
   oauth2:
     redirect-success: http://localhost:3000/oauth2/success
+
+telegram:
+  new-order:
+    bot-token: ${TELEGRAM_NEW_ORDER_BOT_TOKEN}
+    chat-id: ${TELEGRAM_NEW_ORDER_CHAT_ID}
+  success-order:
+    bot-token: ${TELEGRAM_SUCCESS_ORDER_BOT_TOKEN}
+    chat-id: ${TELEGRAM_SUCCESS_ORDER_CHAT_ID}
